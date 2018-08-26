@@ -8,7 +8,7 @@
 #define ECHO_PIN 12
 
 //SR04 sr04 = SR04(ECHO_PIN, TRIG_PIN);
-int maxDist = 200;
+int maxDist = 500;
 NewPing sonar(TRIG_PIN, ECHO_PIN, maxDist);
 long dist;
 long dists[3] = {666, 666, 666};
@@ -16,7 +16,7 @@ long dists[3] = {666, 666, 666};
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
 
-int angle = 30;
+int angle = 45;
 int pos[] = {90+angle, 90, 90-angle, 90};
 int count = 1;
 
@@ -44,7 +44,9 @@ void loop() {
     delay(200);
     
     //dist = sr04.Distance();
-    dist = sonar.ping_cm();
+    //dist = sonar.ping_cm();
+    dist = sonar.convert_cm(sonar.ping_median(5));
+    if(dist==0) dist=666;
     dists[count==3?1:count] = dist;
     for(int i=0; i<3;i++){
       Serial.print(dists[i]);
