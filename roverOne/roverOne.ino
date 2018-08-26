@@ -27,11 +27,21 @@ int* dists;
 byte leds;
 bool onoff = false;
 
-void updateShiftRegister(){
+void updateLEDS(){
   digitalWrite(LATCH_PIN, LOW);
   shiftOut(DATA_PIN, CLOCK_PIN, LSBFIRST, leds);
   digitalWrite(LATCH_PIN, HIGH);
-}
+} // end updateLEDS
+
+void updateDists(){
+  myservo.write(90+angle-count*stepsize);
+  dist = sonar.convert_cm(sonar.ping_median(3));
+  if(dist==0) dist=666;
+  dists[count] = dist;
+  if(dist>50) bitSet(leds, count);
+  else bitClear(leds, count);
+  updateLEDS();
+} // end updateDists
 
 void setup() {
   dists = new int[numBins];
@@ -46,7 +56,7 @@ void setup() {
   pinMode(CLOCK_PIN, OUTPUT);
   pinMode(DATA_PIN, OUTPUT);
 
-  updateShiftRegister();
+  updateLEDS();
   
   
   pinMode(BUTTON_PIN, INPUT_PULLUP);
@@ -76,28 +86,24 @@ void loop() {
   if(onoff){
 
     while(count<numBins){
+      if(digitalRead(BUTTON_PIN) == LOW){
+        onoff = !onoff;
+        delay(300);
+        return;
+      }
       count++;
-      myservo.write(90+angle-count*stepsize);
-      dist = sonar.convert_cm(sonar.ping_median(3));
-      if(dist==0) dist=666;
-      dists[count] = dist;
-      if(dist>50) bitSet(leds, count);
-      else bitClear(leds, count);
-      updateShiftRegister();
+      updateDists();
       //delay(200);
     }
   
     while(count>=0){
+      if(digitalRead(BUTTON_PIN) == LOW){
+        onoff = !onoff;
+        delay(300);
+        return;
+      }
       count--;
-      myservo.write(90+angle-count*stepsize);
-      //delay(100);
-      dist = sonar.convert_cm(sonar.ping_median(3));
-      if(dist==0) dist=666;
-      dists[count] = dist;
-      if(dist>50) bitSet(leds, count);
-      else bitClear(leds, count);
-      updateShiftRegister();
-      //delay(200);
+      updateDists();
     }
     for(int i=0; i<numBins;i++){
       Serial.print(dists[i]);
