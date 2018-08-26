@@ -41,7 +41,7 @@ void loop() {
     //Serial.print(": ");
     
     myservo.write(pos[count]);
-    delay(200);
+    delay(100);
     
     //dist = sr04.Distance();
     //dist = sonar.ping_cm();
