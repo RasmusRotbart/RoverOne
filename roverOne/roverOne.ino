@@ -1,19 +1,23 @@
 #include <Servo.h>
-#include "SR04.h"
+//#include "SR04.h"
+#include <NewPing.h>
 
 #define BUTTON_PIN 4
 #define SERVO_PIN 9
 #define TRIG_PIN 11
 #define ECHO_PIN 12
 
-SR04 sr04 = SR04(ECHO_PIN, TRIG_PIN);
+//SR04 sr04 = SR04(ECHO_PIN, TRIG_PIN);
+int maxDist = 200;
+NewPing sonar(TRIG_PIN, ECHO_PIN, maxDist);
 long dist;
 long dists[3] = {666, 666, 666};
 
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
 
-int pos[] = {135, 90, 45, 90};
+int angle = 30;
+int pos[] = {90+angle, 90, 90-angle, 90};
 int count = 1;
 
 void setup() {
@@ -37,9 +41,10 @@ void loop() {
     //Serial.print(": ");
     
     myservo.write(pos[count]);
-    delay(500);
+    delay(200);
     
-    dist = sr04.Distance();
+    //dist = sr04.Distance();
+    dist = sonar.ping_cm();
     dists[count==3?1:count] = dist;
     for(int i=0; i<3;i++){
       Serial.print(dists[i]);
