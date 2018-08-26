@@ -8,7 +8,7 @@
 
 SR04 sr04 = SR04(ECHO_PIN, TRIG_PIN);
 long dist;
-long dists[4] = {666, 666, 666, 666};
+long dists[3] = {666, 666, 666};
 
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
