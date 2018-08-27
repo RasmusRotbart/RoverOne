@@ -1,6 +1,8 @@
 
-RoverOne.sln
-RoverOne.vcxproj
-RoverOne.vcxproj.filters
-RoverOne.vcxproj.user
-.RoverOne.vsarduino.h
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.vsarduino.h
+*.suo
+*.xml
