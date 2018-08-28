@@ -16,7 +16,7 @@ int maxDist = 300;
 NewPing sonar(TRIG_PIN, ECHO_PIN, maxDist);
 int dist;
 int* dists;
-float momentum = 0.75;
+float momentum = 0.8;
 
 Servo myservo;  // create servo object to control a servo
 // twelve servo objects can be created on most boards
@@ -25,19 +25,40 @@ bool onoff = false;
 int angle = 45;
 int stepsize = 15;
 int numBins = 2*angle/stepsize+1;
-int count = (numBins-1)/2;
-int perSide = angle/stepsize+1;
+int count = 0;//(numBins-1)/2;
+int perSide = angle/stepsize;
 
 byte leds;
 
-int veloLeft = 0;
-int veloRight = 0;
+float veloForward = 0;
+float veloLeft = 0;
+float veloRight = 0;
 int minVeloDist = 20;
 int maxVeloDist = 50;
-int maxBackVelo = -10;
+float maxBackVelo = -0.1;
 
 
 void updateLEDS(){
+  leds = 0;
+  
+  if(veloLeft<0) bitSet(leds, 3);  
+  if(veloLeft>0){
+    bitSet(leds, 2);
+    if(veloLeft>0.5){
+      bitSet(leds, 1);
+      if(veloLeft>0.9) bitSet(leds, 0);
+    }
+  }
+
+  if(veloRight<0) bitSet(leds, 4);  
+  if(veloRight>0){
+    bitSet(leds, 5);
+    if(veloRight>0.50){
+      bitSet(leds, 6);
+      if(veloRight>0.90) bitSet(leds, 7);
+    }
+  }
+  
   digitalWrite(LATCH_PIN, LOW);
   shiftOut(DATA_PIN, CLOCK_PIN, LSBFIRST, leds);
   digitalWrite(LATCH_PIN, HIGH);
@@ -52,12 +73,30 @@ void updateDists(){
   } else {
     // ??? change dist ?
   }
-  if(dist>50) bitSet(leds, count);
-  else bitClear(leds, count);
+  //if(dist>50) bitSet(leds, count);
+  //else bitClear(leds, count);
 } // end updateDists
+
+void initDists(){
+  myservo.write(90+angle-count*stepsize);
+  delay(500);
+  while(count<numBins){
+    count++;
+    updateDists();
+  }
+} // end initDists()
 
 void computeVelocity(){
   int d = 0;
+  veloForward = 0;
+  for(int l=perSide-1; l<perSide+2; l++){
+    d = (dists[l]>maxVeloDist)?maxVeloDist:dists[l];
+    veloForward += d;
+    if(l==perSide) veloForward += d;
+  }
+  veloForward = max(0,float(veloForward-4*minVeloDist)/float((maxVeloDist-minVeloDist)*4));
+  
+  d = 0;
   int dSum = 0;
   for(int l=0; l<perSide; l++){
     //d = (dists[l]<minVeloDist)?minVeloDist:dists[l];
@@ -66,20 +105,46 @@ void computeVelocity(){
 
     dSum += d;
   }
-  veloRight = 100.*float(dSum-perSide*minVeloDist)/float((maxVeloDist-minVeloDist)*perSide);
+  veloRight = float(dSum-perSide*minVeloDist)/float((maxVeloDist-minVeloDist)*perSide);
+  veloRight *= veloForward;
   veloRight = (veloRight>=maxBackVelo)?veloRight:maxBackVelo;
 
   d = 0;
   dSum = 0;
-  for(int l=perSide; l<perSide*2; l++){
+  for(int l=perSide+2; l<perSide*2+2; l++){
     //d = (dists[l]<minVeloDist)?minVeloDist:dists[l];
     //d = (d>maxVeloDist)?maxVeloDist:d;
     d = (dists[l]>maxVeloDist)?maxVeloDist:dists[l];
 
     dSum += d;
   }
-  veloLeft = 100.*float(dSum-perSide*minVeloDist)/float((maxVeloDist-minVeloDist)*perSide);
+  veloLeft = float(dSum-perSide*minVeloDist)/float((maxVeloDist-minVeloDist)*perSide);
+  veloLeft *= veloForward;
   veloLeft = (veloLeft>=maxBackVelo)?veloLeft:maxBackVelo;
+
+  if(veloRight == 0 && veloLeft == 0){
+    // short part back and turn right
+    veloLeft = maxBackVelo;
+    veloRight = maxBackVelo;
+
+    // print velos
+    for(int i = 0; i < numBins; i++) Serial.print("\t");
+    Serial.print(" | ");
+    Serial.print(veloLeft);
+    Serial.print("\t");
+    Serial.println(veloRight);
+    delay(1000);
+    veloLeft = -maxBackVelo;
+    // print velos
+    for(int i = 0; i < numBins; i++) Serial.print("\t");
+    Serial.print(" | ");
+    Serial.print(veloLeft);
+    Serial.print("\t");
+    Serial.println(veloRight);
+    delay(1000);
+    initDists();
+  }
+  
 }
 
 void setupTest(){
@@ -131,6 +196,10 @@ void loop() {
   if(digitalRead(BUTTON_PIN) == LOW){
     onoff = !onoff;
     delay(300);
+    if(onoff == true){
+      count=0;
+      initDists();
+    }
   }
 
   if(onoff){
@@ -143,8 +212,8 @@ void loop() {
       }
       count++;
       updateDists();
+      computeVelocity();
       updateLEDS();
-      //delay(200);
     }
   
     while(count>=0){
@@ -155,11 +224,10 @@ void loop() {
       }
       count--;
       updateDists();
+      computeVelocity();
       updateLEDS();
     }
-
-    computeVelocity();
-
+    
     for(int i=0; i<numBins;i++){
       Serial.print(dists[i]);
       Serial.print("\t");
@@ -168,6 +236,8 @@ void loop() {
     Serial.print(veloLeft);
     Serial.print("\t");
     Serial.print(veloRight);
+    Serial.print("\t");
+    Serial.print(veloForward);
     Serial.println();
   }
 }
