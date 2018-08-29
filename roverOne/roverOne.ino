@@ -78,6 +78,7 @@ void updateDists(){
 } // end updateDists
 
 void initDists(){
+  count = 0;
   myservo.write(90+angle-count*stepsize);
   delay(500);
   while(count<numBins){
@@ -126,20 +127,22 @@ void computeVelocity(){
     // short part back and turn right
     veloLeft = maxBackVelo;
     veloRight = maxBackVelo;
+    updateLEDS();
 
     // print velos
     for(int i = 0; i < numBins; i++) Serial.print("\t");
     Serial.print(" | ");
     Serial.print(veloLeft);
-    Serial.print("\t");
+    Serial.print("   \t");
     Serial.println(veloRight);
     delay(1000);
     veloLeft = -maxBackVelo;
+    updateLEDS();
     // print velos
     for(int i = 0; i < numBins; i++) Serial.print("\t");
     Serial.print(" | ");
     Serial.print(veloLeft);
-    Serial.print("\t");
+    Serial.print("   \t");
     Serial.println(veloRight);
     delay(1000);
     initDists();
@@ -155,7 +158,7 @@ void setupTest(){
     Serial.print("\t");
   }
   Serial.print(" | ");
-  Serial.print("vL");
+  Serial.print("vL   ");
   Serial.print("\t");
   Serial.print("vR");
   Serial.println();
@@ -170,7 +173,7 @@ void setupTest(){
   }
   Serial.print(" | ");
   Serial.print(0);
-  Serial.print("\t");
+  Serial.print("    \t");
   Serial.print(0);
   Serial.println();
 }
@@ -197,7 +200,6 @@ void loop() {
     onoff = !onoff;
     delay(300);
     if(onoff == true){
-      count=0;
       initDists();
     }
   }
@@ -234,9 +236,9 @@ void loop() {
     }
     Serial.print(" | ");
     Serial.print(veloLeft);
-    Serial.print("\t");
+    Serial.print("   \t");
     Serial.print(veloRight);
-    Serial.print("\t");
+    Serial.print("    \t");
     Serial.print(veloForward);
     Serial.println();
   }
